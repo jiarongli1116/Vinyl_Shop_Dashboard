@@ -38,9 +38,8 @@
   <div class="container d-flex">
     <!-- 側邊欄 -->
     <nav class="sidebar" id="sidebar">
-      <div class="vinyl-decoration"></div>
       <div class="logo">
-        <img src="images/eflogo.png" alt="Echo & Flow Logo" class="logo-image" />
+        <img src="../images/eflogo.png" alt="Echo & Flow Logo" class="logo-image" />
       </div>
 
       <nav class="sidebar-nav">
@@ -55,3 +54,4 @@
 
     <!-- 這裡開啟 main-content，template_main.php 會直接插入內容 -->
     <main class="main-content flex-grow-1">
+      <div class="content-section ">
