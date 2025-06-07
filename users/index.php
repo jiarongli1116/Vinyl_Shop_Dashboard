@@ -4,101 +4,74 @@ $cssList = ["../css/index.css"];
 include "../template_top.php";
 include "../template_main.php";
 
-require_once "../connect.php";
-require_once "../Utilities.php";
-
 ?>
 
-<?php
-$perPage = 25;
-$page = intval($_GET["page"] ?? 1);
-$pageStart = ($page - 1) * $perPage;
-
-//整理主sql
-$sql = "SELECT * FROM `users` WHERE `is_valid` = 1 LIMIT $perPage OFFSET $pageStart";
-$sqlAll = "SELECT * FROM `users` WHERE `is_valid` = 1 ";
-
-try {
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $stmtAll = $pdo->prepare($sqlAll);
-    $stmtAll->execute();
-
-    $totalCount = $stmtAll->rowCount();
-} catch (PDOException $e) {
-    echo "錯誤: {{$e->getMessage()}}";
-    exit;
-}
-
-$totalPage = ceil($totalCount / $perPage);
-
-?>
-
-    <div class="container mt-3">
-        <h1>使用者列表</h1>
-        <div class="my-2 d-flex">
-            <span class="me-auto">目前共 <?= $totalCount ?> 筆資料</span>
-            <a class="btn btn-primary btn-sm btn-add" href="./add.php">增加資料</a>
-        </div>
-        <div class="msg text-bg-dark ps-1">
-            <div class="id">#</div>
-            <div class="name">姓名</div>
-            <div class="content">email</div>
-            <div class="time">操作</div>
-        </div>
-
-
-
-        <?php foreach ($rows as $index => $row): ?>
-            <div class="msg">
-                <div class="id"><?= $index + 1 + ($page - 1) * $perPage ?></div>
-                <div class="name"><?= $row["name"] ?></div>
-                <div class="content"><?= $row["email"] ?></div>
-                <div class="time">
-                    <div class="btn btn-danger btn-sm btn-del" data-id="<?= $row["id"] ?>">刪除</div>
-                    <a class="btn btn-warning btn-sm" href="./update.php?id=<?= $row["id"] ?>">修改</a>
-                </div>
-            </div>
-        <?php endforeach; ?>
-
-        <ul class="pagination pagination-sm justify-content-center">
-            <?php for($i = 1; $i <= $totalPage; $i++): ?>
-            <li class="page-item <?= $page == $i ? "active" : "" ?>">
-                <?php
-                    $link = "?page={$i}";
-                ?>
-                <a class="page-link" href="<?=$link?>"><?=$i?></a>
-            </li>
-            <?php endfor;?>
-        </ul>
-
+<div class="content-section">
+    <div class="section-header">
+        <h3 class="section-title">會員列表</h3>
+        <a href="#" class="btn btn-primary">新增會員</a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
-        crossorigin="anonymous"></script>
+    <div class="controls-section">
+        <div class="search-box">
+            <input type="text" id="memberSearch" placeholder="搜尋會員姓名、Email或編號..." onkeyup="searchMembers()">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="filter-group">
+            <select id="levelFilter" onchange="filterMembers()">
+                <option value="">全部等級</option>
+                <option value="一般會員">一般會員</option>
+                <option value="VIP會員">VIP會員</option>
+                <option value="黑膠收藏家">黑膠收藏家</option>
+            </select>
+            <select id="dateFilter" onchange="filterMembers()">
+                <option value="">註冊時間</option>
+                <option value="recent">近30天</option>
+                <option value="month">近3個月</option>
+                <option value="year">近一年</option>
+            </select>
+            <button class="clear-filters" onclick="clearFilters()">清除篩選</button>
+        </div>
+    </div>
 
-    <script>
-        const btnDels = document.querySelectorAll(".btn-del");
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="sortable-header" onclick="sortTable('members', 'id')">會員編號</th>
+                    <th class="sortable-header" onclick="sortTable('members', 'name')">姓名</th>
+                    <th class="sortable-header" onclick="sortTable('members', 'email')">Email</th>
+                    <th class="sortable-header" onclick="sortTable('members', 'level')">等級</th>
+                    <th class="sortable-header" onclick="sortTable('members', 'date')">註冊日期</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
 
-        //滑鼠點擊事件
-        btnDels.forEach((btn) => {
-            btn.addEventListener("click", doConfirm);
-        });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
+    crossorigin="anonymous"></script>
 
-        //window.confirm() 前面window可省略
-        function doConfirm(e) {
-            const btn = e.target;
-            console.log(btn.dataset.id);
-            if (confirm("確定要刪除嗎")) {
-                window.location.href = `./doDelete.php?id=${btn.dataset.id}`;
-            }
+<script>
+    const btnDels = document.querySelectorAll(".btn-del");
 
-        };
-    </script>
+    //滑鼠點擊事件
+    btnDels.forEach((btn) => {
+        btn.addEventListener("click", doConfirm);
+    });
+
+    //window.confirm() 前面window可省略
+    function doConfirm(e) {
+        const btn = e.target;
+        console.log(btn.dataset.id);
+        if (confirm("確定要刪除嗎")) {
+            window.location.href = `./doDelete.php?id=${btn.dataset.id}`;
+        }
+
+    };
+</script>
 
 
 <?php
